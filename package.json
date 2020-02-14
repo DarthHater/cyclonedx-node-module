@@ -18,6 +18,9 @@
     "appsec",
     "scrm"
   ],
+  "yargs": {
+    "camel-case-expansion": false
+  },
   "contributors": [
     {
       "name": "Erlend Oftedal"
@@ -56,11 +59,13 @@
     "ssri": "^6.0.0",
     "uuid": "^3.3.2",
     "xmlbuilder": "^13.0.2",
-    "xmldom": "^0.2.1"
+    "xmldom": "^0.2.1",
+    "yargs": "^15.1.0"
   },
   "devDependencies": {
     "@types/node": "^13.7.1",
     "@types/ssri": "^6.0.1",
+    "@types/yargs": "^15.0.3",
     "typescript": "^3.7.5"
   },
   "files": [
