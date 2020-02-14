@@ -39,6 +39,7 @@ export class CycloneDXSbomCreator {
     if (this.options && this.options.includeBomSerialNumber) {
         bom.att('serialNumber', 'urn:uuid:' + uuidv4());
     }
+
     bom.att('version', 1);
 
     let componentsNode = bom.ele('components');
@@ -219,7 +220,9 @@ export class CycloneDXSbomCreator {
         } else {
           licenseContent.name = l;
         }
-        this.addLicenseText(pkg, l, licenseContent);
+        if(this.options && this.options.includeLicenseText) {
+          this.addLicenseText(pkg, l, licenseContent);
+        }
         return licenseContent;
       }).map((l: any) => ({license: l}));
     }

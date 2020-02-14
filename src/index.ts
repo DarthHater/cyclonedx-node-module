@@ -15,7 +15,13 @@
  */
 import { CycloneDXSbomCreator } from "./CycloneDXSbomCreator/CycloneDXSbomCreator";
 
-let sbomCreator = new CycloneDXSbomCreator(process.cwd(), {devDependencies: true, includeBomSerialNumber: true, includeLicenseData: true});
+let sbomCreator = new CycloneDXSbomCreator(
+  process.cwd(), {
+    devDependencies: true, 
+    includeBomSerialNumber: true, 
+    includeLicenseData: true,
+    includeLicenseText: false,
+  });
 
 sbomCreator.createBom()
   .then((val) => {

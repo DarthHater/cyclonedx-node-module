@@ -17,4 +17,5 @@ export interface Options {
   devDependencies?: boolean,
   includeBomSerialNumber?: boolean,
   includeLicenseData?: boolean,
+  includeLicenseText?: boolean,
 }
