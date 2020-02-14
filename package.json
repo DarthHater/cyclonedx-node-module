@@ -35,7 +35,10 @@
       "email": "jeffryxtron@gmail.com"
     }
   ],
-  "main": "bin/index.js",
+  "main": "./bin/index.js",
+  "bin": {
+    "cyclonedx-bom": "./bin/index.js"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "build-dev": "tsc -p tsconfig.development.json",
