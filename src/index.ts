@@ -56,7 +56,7 @@ let argv = yargs
 
 if (argv) {
   if (argv._[0] == 'generate') {
-    let sbomCreator = new CycloneDXSbomCreator(
+    const sbomCreator = new CycloneDXSbomCreator(
       process.cwd(), {
         devDependencies: (argv.dev) ? true : false, 
         includeBomSerialNumber: (argv["include-serial-number"]) ? true : false, 
