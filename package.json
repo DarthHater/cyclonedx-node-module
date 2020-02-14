@@ -26,14 +26,17 @@
       "name": "Steve Springett",
       "email": "steve.springett@owasp.org",
       "url": "https://about.me/stevespringett"
+    },
+    {
+      "name": "Jeffry Hesse",
+      "email": "jeffryxtron@gmail.com"
     }
   ],
-  "main": "index.js",
-  "bin": {
-    "cyclonedx-bom": "./bin/cyclonedx-bom"
-  },
+  "main": "bin/index.js",
   "scripts": {
-    "test": "echo \"Warning: no test specified\" && exit 0"
+    "build": "tsc -p tsconfig.json",
+    "build-dev": "tsc -p tsconfig.development.json",
+    "start": "node ./bin/index.js"
   },
   "engines": {
     "node": ">=8.0.0"
@@ -55,8 +58,13 @@
     "xmlbuilder": "^13.0.2",
     "xmldom": "^0.2.1"
   },
+  "devDependencies": {
+    "@types/node": "^13.7.1",
+    "@types/ssri": "^6.0.1",
+    "typescript": "^3.7.5"
+  },
   "files": [
-    "index.js",
+    "bin/index.js",
     "bin/",
     "spdx-licenses.json"
   ]
