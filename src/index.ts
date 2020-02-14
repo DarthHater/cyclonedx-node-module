@@ -20,7 +20,7 @@ let sbomCreator = new CycloneDXSbomCreator(
     devDependencies: true, 
     includeBomSerialNumber: true, 
     includeLicenseData: true,
-    includeLicenseText: false,
+    includeLicenseText: true,
   });
 
 sbomCreator.createBom()

@@ -13,23 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ExternalReference } from "./ExternalReference";
-import { Hash } from "./Hash";
-
-export interface Component {
-  '@type': string,
-  '@bom-ref': string,
-  group: string,
-  name: string,
-  version: string,
-  description: Object,
-  hashes?: Array<Hash>,
-  licenses?: Array<any>,
-  purl: string,
-  externalReferences?: Array<ExternalReference>
+export interface ExternalReference {
+  reference: Reference,
 }
 
-export interface GenericDescription {
-  '#cdata': string,
-  '@content-type'?: string
+export interface Reference {
+  '@type': string,
+  url: string
 }

@@ -23,6 +23,8 @@ import * as ssri from 'ssri';
 import * as fs from 'fs';
 import { LicenseContent } from "./Types/LicenseContent";
 import { Component, GenericDescription } from "./Types/Component";
+import { ExternalReference } from "./Types/ExternalReference";
+import { Hash } from "./Types/Hash";
 
 export class CycloneDXSbomCreator {
   readonly SBOMSCHEMA: string = 'http://cyclonedx.org/schema/bom/1.1';
@@ -149,24 +151,24 @@ export class CycloneDXSbomCreator {
    * of the package with support for multiple hashing algorithms.
    */
   private processHashes(pkg: any, component: Component) {
-    component.hashes = [];
+    component.hashes = new Array<Hash>();
     if (pkg._shasum) {
-      component.hashes.push({ hash: { '@alg':'SHA-1', '#text': pkg._shasum} });
+      component.hashes.push({hash: { '@alg':'SHA-1', '#text': pkg._shasum} });
     } else if (pkg._integrity) {
       let integrity = ssri.parse(pkg._integrity);
       // Components may have multiple hashes with various lengths. Check each one
       // that is supported by the CycloneDX specification.
       if (integrity.hasOwnProperty('sha512')) {
-        this.addComponentHash('SHA-512', integrity.sha512[0].digest, component);
+        component.hashes.push(this.addComponentHash('SHA-512', integrity.sha512[0].digest));
       }
       if (integrity.hasOwnProperty('sha384')) {
-        this.addComponentHash('SHA-384', integrity.sha384[0].digest, component);
+        component.hashes.push(this.addComponentHash('SHA-384', integrity.sha384[0].digest));
       }
       if (integrity.hasOwnProperty('sha256')) {
-        this.addComponentHash('SHA-256', integrity.sha256[0].digest, component);
+        component.hashes.push(this.addComponentHash('SHA-256', integrity.sha256[0].digest));
       }
       if (integrity.hasOwnProperty('sha1')) {
-        this.addComponentHash('SHA-1', integrity.sha1[0].digest, component);
+        component.hashes.push(this.addComponentHash('SHA-1', integrity.sha1[0].digest));
       }
     }
     if (component.hashes.length === 0) {
@@ -177,15 +179,15 @@ export class CycloneDXSbomCreator {
   /**
    * Adds a hash to component.
    */
-  private addComponentHash(alg: string, digest: string, component: any) {
+  private addComponentHash(alg: string, digest: string): Hash {
     let hash = Buffer.from(digest, 'base64').toString('hex');
-    component.hashes.push({hash: {'@alg': alg, '#text': hash}});
+    return {hash: {'@alg': alg, '#text': hash}};
   }
 
   /**
    * Adds external references supported by the package format.
    */
-  private addExternalReferences(pkg: any): Array<Object> {
+  private addExternalReferences(pkg: any): Array<ExternalReference> {
     let externalReferences = [];
     if (pkg.homepage) {
       externalReferences.push({'reference': {'@type': 'website', url: pkg.homepage}});
@@ -226,7 +228,7 @@ export class CycloneDXSbomCreator {
         return licenseContent;
       }).map((l: any) => ({license: l}));
     }
-    return null;
+    return undefined;
   }
 
   /**
