@@ -64,9 +64,15 @@ if (argv) {
         includeLicenseText: (argv["exclude-license-text"]) ? false : true,
       });
     
-    sbomCreator.createBom()
-      .then((val) => {
-        console.log(val);
+    sbomCreator.getPackageInfoFromReadInstalled()
+      .then((pkgInfo) => {
+        sbomCreator.createBom(pkgInfo)
+        .then((val) => {
+          console.log(val);
+        })
+        .catch((err) => {
+          console.error(err);
+        });
       })
       .catch((err) => {
         console.error(err);

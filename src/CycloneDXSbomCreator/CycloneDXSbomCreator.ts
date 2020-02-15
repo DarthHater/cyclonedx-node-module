@@ -1,3 +1,6 @@
+/// <reference types="./typings/packageurl-js" />
+/// <reference types="./typings/parse-packagejson-name" />
+/// <reference types="./typings/read-installed" />
 /*
  * Copyright (c) 2020-present Erlend Oftedal, Steve Springett, Sonatype, Inc.
  *
@@ -13,20 +16,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Options } from "./Options";
+import * as fs from 'fs';
+
 import uuidv4 from 'uuid/v4';
 import builder from 'xmlbuilder';
 import readInstalled from 'read-installed';
 import PackageURL from "packageurl-js";
 import parsePackageJsonName from 'parse-packagejson-name';
 import * as ssri from 'ssri';
-import * as fs from 'fs';
+
+import { Options } from "./Options";
 import { LicenseContent } from "./Types/LicenseContent";
 import { Component, GenericDescription } from "./Types/Component";
 import { ExternalReference } from "./Types/ExternalReference";
 import { Hash } from "./Types/Hash";
 
 export class CycloneDXSbomCreator {
+  readonly licenseFilenames: Array<string> = [ 
+    'LICENSE',
+    'License',
+    'license',
+    'LICENCE',
+    'Licence',
+    'licence',
+    'NOTICE',
+    'Notice',
+    'notice'
+  ];
+
+  readonly licenseContentTypes = [ 
+    { licenseContentType: 'text/plain', fileExtension: '' },
+    { licenseContentType: 'text/txt', fileExtension: '.txt' },
+    { licenseContentType: 'text/markdown', fileExtension: '.md' },
+    { licenseContentType: 'text/xml', fileExtension: '.xml' }
+  ];
+
   readonly SBOMSCHEMA: string = 'http://cyclonedx.org/schema/bom/1.1';
 
   constructor(
@@ -34,9 +58,9 @@ export class CycloneDXSbomCreator {
     readonly options?: Options,
     ) {}
 
-  public async createBom() {
+  public async createBom(pkgInfo: any) {
     let bom = builder.create('bom', { encoding: 'utf-8', separateArrayItems: true })
-    .att('xmlns', this.SBOMSCHEMA);
+      .att('xmlns', this.SBOMSCHEMA);
 
     if (this.options && this.options.includeBomSerialNumber) {
         bom.att('serialNumber', 'urn:uuid:' + uuidv4());
@@ -45,7 +69,7 @@ export class CycloneDXSbomCreator {
     bom.att('version', 1);
 
     let componentsNode = bom.ele('components');
-    let pkgInfo = await this.getPackageInfoFromReadInstalled();
+
     let components = this.listComponents(pkgInfo);
 
     if (components.length > 0) {
@@ -53,9 +77,6 @@ export class CycloneDXSbomCreator {
     }
 
     let bomString = bom.end({
-      pretty: true,
-      indent: '  ',
-      newline: '\n',
       width: 0,
       allowEmpty: false,
       spaceBeforeSlash: ''
@@ -64,10 +85,10 @@ export class CycloneDXSbomCreator {
     return bomString;
   }
 
-  private getPackageInfoFromReadInstalled() {
+  public getPackageInfoFromReadInstalled(path: string = this.path) {
     return new Promise((resolve, reject) => {
       readInstalled(
-        this.path, { 
+        path, { 
           dev: (this.options && this.options.devDependencies) ? this.options.devDependencies : false 
         }, 
         async (err: any, data: any) => {
@@ -106,16 +127,21 @@ export class CycloneDXSbomCreator {
         name: name,
         version: version,
         description: description,
+        hashes: [],
+        licenses: [],
         purl: purl,
         externalReferences : this.addExternalReferences(pkg)
       };
 
       if (this.options && this.options.includeLicenseData) {
         component.licenses = this.getLicenses(pkg);
+      } else {
+        delete component.licenses;
       }
 
+
       if (component.externalReferences === undefined || component.externalReferences.length === 0) {
-          delete component.externalReferences;
+        delete component.externalReferences;
       }
 
       this.processHashes(pkg, component);
@@ -223,7 +249,7 @@ export class CycloneDXSbomCreator {
           licenseContent.name = l;
         }
         if(this.options && this.options.includeLicenseText) {
-          this.addLicenseText(pkg, l, licenseContent);
+          licenseContent.text = this.addLicenseText(pkg, l);
         }
         return licenseContent;
       }).map((l: any) => ({license: l}));
@@ -236,19 +262,19 @@ export class CycloneDXSbomCreator {
   * used naming and content types. If a candidate file is found, add
   * the text to the license text object and stop.
   */
-  private addLicenseText(pkg: any, l: string, licenseContent: LicenseContent) {
-    let licenseFilenames: Array<string> = [ 'LICENSE', 'License', 'license', 'LICENCE', 'Licence', 'licence', 'NOTICE', 'Notice', 'notice' ];
-    let licenseContentTypes = { 'text/plain': '', 'text/txt': '.txt', 'text/markdown': '.md', 'text/xml': '.xml' };
+  private addLicenseText(pkg: any, licenseName: string): GenericDescription | undefined {
     /* Loops over different name combinations starting from the license specified
       naming (e.g., 'LICENSE.Apache-2.0') and proceeding towards more generic names. */
-    for (const licenseName of [`.${l}`, '']) {
-      for (const licenseFilename of licenseFilenames) {
-        for (const [licenseContentType, fileExtension] of Object.entries(licenseContentTypes)) {
-          let licenseFilepath = `${pkg.realPath}/${licenseFilename}${licenseName}${fileExtension}`;
-          if (fs.existsSync(licenseFilepath)) {
-            licenseContent.text = this.readLicenseText(licenseFilepath, licenseContentType);
-            return;
-          }
+    for (const licenseFilename of this.licenseFilenames) {
+      for (const {licenseContentType, fileExtension} of this.licenseContentTypes) {
+        let licenseFilepath = `${pkg.realPath}/${licenseFilename}${licenseName}${fileExtension}`;
+        if (fs.existsSync(licenseFilepath)) {
+          return this.readLicenseText(licenseFilepath, licenseContentType);
+        }
+
+        licenseFilepath = `${pkg.realPath}/${licenseFilename}${fileExtension}`;
+        if (fs.existsSync(licenseFilepath)) {
+          return this.readLicenseText(licenseFilepath, licenseContentType);
         }
       }
     }
